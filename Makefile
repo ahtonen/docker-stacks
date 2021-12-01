@@ -48,14 +48,21 @@ help:
 
 
 
-build/%: DOCKER_BUILD_ARGS?=
 build/%: ## build the latest image for a stack using the system's architecture
 	@echo "::group::Build $(OWNER)/$(notdir $@) (system's architecture)"
-	docker build $(DOCKER_BUILD_ARGS) --rm --force-rm -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER)
+	docker build --rm --force-rm -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --build-arg PYTHON_VERSION=$(PYTHON_VERSION)
 	@echo -n "Built image size: "
 	@docker images $(OWNER)/$(notdir $@):latest --format "{{.Size}}"
 	@echo "::endgroup::"
 build-all: $(foreach I, $(ALL_IMAGES), build/$(I)) ## build all stacks
+
+MONAI_IMAGES:= \
+	base-notebook \
+	minimal-notebook \
+	r-notebook \
+	scipy-notebook \
+	pytorch-notebook
+build-monai: $(foreach I, $(MONAI_IMAGES), build/$(I))
 
 # Limitations on docker buildx build (using docker/buildx 0.5.1):
 #
@@ -97,16 +104,15 @@ build-all: $(foreach I, $(ALL_IMAGES), build/$(I)) ## build all stacks
 #    without needing to update this Makefile, and if all tests succeeds we can
 #    do a publish job that creates a multi-platform image for us.
 #
-build-multi/%: DOCKER_BUILD_ARGS?=
 build-multi/%: ## build the latest image for a stack on both amd64 and arm64
 	@echo "::group::Build $(OWNER)/$(notdir $@) (system's architecture)"
-	docker buildx build $(DOCKER_BUILD_ARGS) -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --load
+	docker buildx build -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --load
 	@echo -n "Built image size: "
 	@docker images $(OWNER)/$(notdir $@):latest --format "{{.Size}}"
 	@echo "::endgroup::"
 
 	@echo "::group::Build $(OWNER)/$(notdir $@) (amd64,arm64)"
-	docker buildx build $(DOCKER_BUILD_ARGS) -t build-multi-tmp-cache/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --platform "linux/amd64,linux/arm64"
+	docker buildx build -t build-multi-tmp-cache/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --platform "linux/amd64,linux/arm64"
 	@echo "::endgroup::"
 build-all-multi: $(foreach I, $(MULTI_IMAGES), build-multi/$(I)) $(foreach I, $(AMD64_ONLY_IMAGES), build/$(I)) ## build all stacks
 
@@ -183,10 +189,9 @@ push/%: ## push all tags for a jupyter image
 	@echo "::endgroup::"
 push-all: $(foreach I, $(ALL_IMAGES), push/$(I)) ## push all tagged images
 
-push-multi/%: DOCKER_BUILD_ARGS?=
 push-multi/%: ## push all tags for a jupyter image that support multiple architectures
 	@echo "::group::Push $(OWNER)/$(notdir $@) (amd64,arm64)"
-	docker buildx build $(DOCKER_BUILD_ARGS) $($(subst -,_,$(notdir $@))_EXTRA_TAG_ARGS) -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --platform "linux/amd64,linux/arm64" --push
+	docker buildx build $($(subst -,_,$(notdir $@))_EXTRA_TAG_ARGS) -t $(OWNER)/$(notdir $@):latest ./$(notdir $@) --build-arg OWNER=$(OWNER) --platform "linux/amd64,linux/arm64" --push
 	@echo "::endgroup::"
 push-all-multi: $(foreach I, $(MULTI_IMAGES), push-multi/$(I)) $(foreach I, $(AMD64_ONLY_IMAGES), push/$(I)) ## push all tagged images
 
