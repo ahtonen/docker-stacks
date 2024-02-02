@@ -13,9 +13,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install PyTorch with pip
 # hadolint ignore=DL3013
-RUN pip install --no-cache-dir --index-url 'https://download.pytorch.org/whl/cpu' \
+RUN pip install --no-cache-dir \
     'torch' \
     'torchvision' \
-    'torchaudio'  && \
+    'torchaudio' \
+    'pytorch-ignite' \
+    'lightning' && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
+COPY .bash_aliases /home/$NB_USER/
+
+WORKDIR $HOME

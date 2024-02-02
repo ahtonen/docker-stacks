@@ -1,7 +1,6 @@
 #!/bin/bash
 TOKEN=rihanna
 DOCKER_IMAGE="ahtonen/pytorch-notebook:latest"
-CONTAINER_NAME="monai_stack"
 RUN_ARGS="-d"
 echo "Running $DOCKER_IMAGE"
 #
@@ -13,7 +12,6 @@ docker run $RUN_ARGS \
 --user root \
 --gpus all \
 --ipc host \
---name $CONTAINER_NAME \
 -e NB_UID=1000 \
 -e NB_GID=1000 \
 -e GRANT_SUDO=yes \
@@ -21,5 +19,6 @@ docker run $RUN_ARGS \
 -p 8888:8888 \
 -p 6006:6006 \
 -v "${HOME}/src:/home/jovyan/src" $DOCKER_IMAGE \
-start-notebook.sh \
+start-notebook.py \
+--ServerApp.root_dir=/home/jovyan/src \
 --NotebookApp.token=$TOKEN

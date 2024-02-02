@@ -33,7 +33,7 @@ RUN mamba install --yes \
     'bokeh' \
     'bottleneck' \
     'cloudpickle' \
-    'conda-forge::blas=*=openblas' \
+    'conda-forge::blas=*=mkl' \
     'cython' \
     'dask' \
     'dill' \
@@ -57,7 +57,14 @@ RUN mamba install --yes \
     'statsmodels' \
     'sympy' \
     'widgetsnbextension'\
-    'xlrd' && \
+    'xlrd' \
+    'tensorboard' \    
+    'nibabel' \
+    'pillow' \
+    'black' \
+    'pylint' \    
+    'isort' \
+    'tqdm' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
