@@ -2,29 +2,31 @@
 # Distributed under the terms of the Modified BSD License.
 from dataclasses import dataclass, field
 from typing import Optional
-from .taggers import (
-    TaggerInterface,
-    SHATagger,
-    DateTagger,
-    UbuntuVersionTagger,
-    PythonVersionTagger,
-    JupyterNotebookVersionTagger,
-    JupyterLabVersionTagger,
-    JupyterHubVersionTagger,
-    RVersionTagger,
-    TensorflowVersionTagger,
-    JuliaVersionTagger,
-    SparkVersionTagger,
-    HadoopVersionTagger,
-    JavaVersionTagger,
-)
-from .manifests import (
-    ManifestInterface,
-    CondaEnvironmentManifest,
+
+from tagging.manifests import (
     AptPackagesManifest,
-    RPackagesManifest,
+    CondaEnvironmentManifest,
     JuliaPackagesManifest,
+    ManifestInterface,
+    RPackagesManifest,
     SparkInfoManifest,
+)
+from tagging.taggers import (
+    DateTagger,
+    JavaVersionTagger,
+    JuliaVersionTagger,
+    JupyterHubVersionTagger,
+    JupyterLabVersionTagger,
+    JupyterNotebookVersionTagger,
+    PythonMajorMinorVersionTagger,
+    PythonVersionTagger,
+    PytorchVersionTagger,
+    RVersionTagger,
+    SHATagger,
+    SparkVersionTagger,
+    TaggerInterface,
+    TensorflowVersionTagger,
+    UbuntuVersionTagger,
 )
 
 
@@ -36,42 +38,56 @@ class ImageDescription:
 
 
 ALL_IMAGES = {
-    "base-notebook": ImageDescription(
+    "docker-stacks-foundation": ImageDescription(
         parent_image=None,
         taggers=[
-            SHATagger,
-            DateTagger,
-            UbuntuVersionTagger,
-            PythonVersionTagger,
-            JupyterNotebookVersionTagger,
-            JupyterLabVersionTagger,
-            JupyterHubVersionTagger,
+            SHATagger(),
+            DateTagger(),
+            UbuntuVersionTagger(),
+            PythonMajorMinorVersionTagger(),
+            PythonVersionTagger(),
         ],
-        manifests=[CondaEnvironmentManifest, AptPackagesManifest],
+        manifests=[CondaEnvironmentManifest(), AptPackagesManifest()],
+    ),
+    "base-notebook": ImageDescription(
+        parent_image="docker-stacks-foundation",
+        taggers=[
+            JupyterNotebookVersionTagger(),
+            JupyterLabVersionTagger(),
+            JupyterHubVersionTagger(),
+        ],
     ),
     "minimal-notebook": ImageDescription(parent_image="base-notebook"),
     "scipy-notebook": ImageDescription(parent_image="minimal-notebook"),
     "r-notebook": ImageDescription(
         parent_image="minimal-notebook",
-        taggers=[RVersionTagger],
-        manifests=[RPackagesManifest],
+        taggers=[RVersionTagger()],
+        manifests=[RPackagesManifest()],
+    ),
+    "julia-notebook": ImageDescription(
+        parent_image="minimal-notebook",
+        taggers=[JuliaVersionTagger()],
+        manifests=[JuliaPackagesManifest()],
     ),
     "tensorflow-notebook": ImageDescription(
-        parent_image="scipy-notebook", taggers=[TensorflowVersionTagger]
+        parent_image="scipy-notebook", taggers=[TensorflowVersionTagger()]
+    ),
+    "pytorch-notebook": ImageDescription(
+        parent_image="scipy-notebook", taggers=[PytorchVersionTagger()]
     ),
     "datascience-notebook": ImageDescription(
         parent_image="scipy-notebook",
-        taggers=[RVersionTagger, JuliaVersionTagger],
-        manifests=[RPackagesManifest, JuliaPackagesManifest],
+        taggers=[RVersionTagger(), JuliaVersionTagger()],
+        manifests=[RPackagesManifest(), JuliaPackagesManifest()],
     ),
     "pyspark-notebook": ImageDescription(
         parent_image="scipy-notebook",
-        taggers=[SparkVersionTagger, HadoopVersionTagger, JavaVersionTagger],
-        manifests=[SparkInfoManifest],
+        taggers=[SparkVersionTagger(), JavaVersionTagger()],
+        manifests=[SparkInfoManifest()],
     ),
     "all-spark-notebook": ImageDescription(
         parent_image="pyspark-notebook",
-        taggers=[RVersionTagger],
-        manifests=[RPackagesManifest],
+        taggers=[RVersionTagger()],
+        manifests=[RPackagesManifest()],
     ),
 }

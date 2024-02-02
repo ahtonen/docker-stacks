@@ -1,23 +1,18 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-# https://hub.docker.com/r/jupyter/base-notebook/tags
+# https://quay.io/repository/jupyter/base-notebook?tab=tags
+ARG REGISTRY=quay.io
 ARG OWNER=jupyter
-ARG BASE_CONTAINER=$OWNER/base-notebook:33add21fab64
+ARG BASE_CONTAINER=$REGISTRY/$OWNER/base-notebook:2024-01-15
 FROM $BASE_CONTAINER
 
 LABEL maintainer="Jupyter Project <jupyter@googlegroups.com>"
-ENV TAG="33add21fab64"
 
-WORKDIR "${HOME}"
-COPY binder/README.ipynb .
+# Fix: https://github.com/hadolint/hadolint/wiki/DL4006
+# Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Fix permissions on README.ipynb as root
-USER root
+ENV TAG="2024-01-15"
 
-RUN fix-permissions README.ipynb
-
-# Switch back to jovyan to avoid accidental container runs as root
-USER ${NB_UID}
-
-WORKDIR "${HOME}"
+COPY --chown=${NB_UID}:${NB_GID} binder/README.ipynb "${HOME}"/README.ipynb
